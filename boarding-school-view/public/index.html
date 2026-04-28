@@ -1,0 +1,37 @@
+<!DOCTYPE html>
+<html lang="en" ng-app="boardingSchoolApp">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Boarding School View</title>
+    <script src="https://ajax.googleapis.com/ajax/libs/angularjs/1.8.2/angular.min.js"></script>
+    <link rel="stylesheet" href="style.css">
+</head>
+<body ng-controller="MainController">
+    <div class="container">
+        <h1>Boarding Schools</h1>
+        <div ng-if="loading">Loading schools...</div>
+        <div ng-if="error" class="error">{{error}}</div>
+        
+        <table ng-if="!loading && !error">
+            <thead>
+                <tr>
+                    <th>ID</th>
+                    <th>Name</th>
+                    <th>Pupils</th>
+                    <th>Avg Age</th>
+                </tr>
+            </thead>
+            <tbody>
+                <tr ng-repeat="school in schools">
+                    <td>{{school.id}}</td>
+                    <td>{{school.name}}</td>
+                    <td>{{school.pupilsCount}}</td>
+                    <td>{{school.averageAge}}</td>
+                </tr>
+            </tbody>
+        </table>
+    </div>
+    <script src="dist/bundle.js"></script>
+</body>
+</html>
