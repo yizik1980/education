@@ -4,8 +4,8 @@ namespace boarding_school_api.Models
     {
         public int EducationPlaceId { get; set; }
         public string PlaceName { get; set; } = string.Empty;
-        public int ActiveStudentsCount { get; set; }
+        public int ActiveStudentCount { get; set; }
         public string city { get; set; } = string.Empty;
-        public decimal AverageAges { get; set; }
+        public decimal AvrageAges { get; set; }
     }
 }

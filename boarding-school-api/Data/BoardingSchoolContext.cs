@@ -12,7 +12,7 @@ namespace boarding_school_api.Data
         {
         }
 
-        public DbSet<BoardingSchool> BoardingSchools { get; set; }
+        //public DbSet<BoardingSchool> BoardingSchools { get; set; }
         public DbSet<ActiveStudentsByPlace> ActiveStudentsByPlace { get; set; }
 
         protected override void OnModelCreating(ModelBuilder modelBuilder)
@@ -35,13 +35,13 @@ namespace boarding_school_api.Data
                 .ToListAsync();
         }
 
-        public async Task<BoardingSchool?> GetBoardingSchoolByIdSPAsync(int id)
-        {
-            var result = await BoardingSchools
-                .FromSqlRaw("EXEC GetBoardingSchoolById @Id = {0}", id)
-                .ToListAsync();
-            return result.FirstOrDefault();
-        }
+        //public async Task<BoardingSchool?> GetBoardingSchoolByIdSPAsync(int id)
+        //{
+        //    var result = await BoardingSchools
+        //        .FromSqlRaw("EXEC GetBoardingSchoolById @Id = {0}", id)
+        //        .ToListAsync();
+        //    return result.FirstOrDefault();
+        //}
 
         public async Task InsertBoardingSchoolSPAsync(BoardingSchool school)
         {

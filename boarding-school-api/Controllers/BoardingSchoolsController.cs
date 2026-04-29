@@ -23,16 +23,16 @@ namespace boarding_school_api.Controllers
             return Ok(schools);
         }
 
-        [HttpGet("{id}")]
-        public async Task<ActionResult<BoardingSchool>> Get(int id)
-        {
-            var school = await _context.GetBoardingSchoolByIdSPAsync(id);
-            if (school == null)
-            {
-                return NotFound();
-            }
-            return Ok(school);
-        }
+        //[HttpGet("{id}")]
+        //public async Task<ActionResult<BoardingSchool>> Get(int id)
+        //{
+        //    var school = await _context.GetBoardingSchoolByIdSPAsync(id);
+        //    if (school == null)
+        //    {
+        //        return NotFound();
+        //    }
+        //    return Ok(school);
+        //}
 
         [HttpPost]
         public async Task<ActionResult<BoardingSchool>> Post(BoardingSchool school)
