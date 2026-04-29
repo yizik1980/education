@@ -1,64 +1,41 @@
-using Microsoft.AspNetCore.Mvc;
-using boarding_school_api.Models;
+using Azure.Identity;
 using boarding_school_api.Data;
+using boarding_school_api.Infrastructure;
+using boarding_school_api.Models;
+using Microsoft.AspNetCore.Mvc;
 using Microsoft.EntityFrameworkCore;
 
 namespace boarding_school_api.Controllers
 {
+
     [ApiController]
     [Route("api/[controller]")]
     public class BoardingSchoolsController : ControllerBase
     {
-        private readonly BoardingSchoolContext _context;
+        private readonly IBoardingSchoolQuery _context;
+        private readonly IEducationPlaceSummaryRepo _summeryContext;
 
-        public BoardingSchoolsController(BoardingSchoolContext context)
+        public BoardingSchoolsController(IBoardingSchoolQuery context, IEducationPlaceSummaryRepo summeryContext)
         {
             _context = context;
+            _summeryContext = summeryContext;
         }
 
         [HttpGet]
-        public async Task<ActionResult<IEnumerable<BoardingSchool>>> Get()
+        public async Task<ActionResult<IEnumerable<ActiveStudentsByPlace>>> Get()
         {
             var schools = await _context.GetAllBoardingSchoolsSPAsync();
             return Ok(schools);
         }
 
-        //[HttpGet("{id}")]
-        //public async Task<ActionResult<BoardingSchool>> Get(int id)
-        //{
-        //    var school = await _context.GetBoardingSchoolByIdSPAsync(id);
-        //    if (school == null)
-        //    {
-        //        return NotFound();
-        //    }
-        //    return Ok(school);
-        //}
 
-        [HttpPost]
-        public async Task<ActionResult<BoardingSchool>> Post(BoardingSchool school)
+        [HttpPost("summary")]
+        public async Task<IActionResult> Post([FromBody] BoardeSchoolRequest req)
         {
-            await _context.InsertBoardingSchoolSPAsync(school);
-            return Ok(school);
+            var result = await _summeryContext.GetSummaryAsync(req.City, req.MinStudents);
+            return Ok(result);
         }
 
-        [HttpPut("{id}")]
-        public async Task<IActionResult> Put(int id, BoardingSchool school)
-        {
-            if (id != school.Id)
-            {
-                return BadRequest();
-            }
-
-            await _context.UpdateBoardingSchoolSPAsync(school);
-            return NoContent();
-        }
-
-        [HttpDelete("{id}")]
-        public async Task<IActionResult> Delete(int id)
-        {
-            await _context.DeleteBoardingSchoolSPAsync(id);
-            return NoContent();
-        }
 
         [HttpPost("critical-incident")]
         public IActionResult TriggerCriticalIncident([FromBody] string message)
