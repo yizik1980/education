@@ -1,6 +1,9 @@
 using boarding_school_api.Data;
 using boarding_school_api.Infrastructure;
 using boarding_school_api.Middleware;
+using boarding_school_api.Models;
+using boarding_school_api.Validators;
+using FluentValidation;
 using Microsoft.EntityFrameworkCore;
 
 var builder = WebApplication.CreateBuilder(args);
@@ -14,6 +17,8 @@ builder.Services.AddDbContext<StudentContext>(options =>
     options.UseSqlServer(builder.Configuration.GetConnectionString("DefaultConnection")));
 builder.Services.AddDbContext<EducationPlaceSummaryContext>(options =>
     options.UseSqlServer(builder.Configuration.GetConnectionString("DefaultConnection")));
+// Validators
+builder.Services.AddScoped<IValidator<Student>, StudentValidator>();
 // Repositories
 builder.Services.AddScoped<IStudentsRepository, StudentRepository>();
 builder.Services.AddScoped<IBoardingSchoolQuery, BoardingSchoolQuery>();

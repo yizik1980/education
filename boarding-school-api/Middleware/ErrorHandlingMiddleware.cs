@@ -27,23 +27,27 @@ namespace boarding_school_api.Middleware
             {
                 _logger.LogError(ex, "An unhandled exception has occurred.");
                 await HandleExceptionAsync(context, ex);
-                
-                // Here we would call the logging microservice
-                await ReportToLoggingService(ex.Message);
+
+                if (ex is not KeyNotFoundException && ex is not InvalidOperationException)
+                    await ReportToLoggingService(ex.Message);
             }
         }
 
         private static Task HandleExceptionAsync(HttpContext context, Exception exception)
         {
             context.Response.ContentType = "application/json";
-            context.Response.StatusCode = (int)HttpStatusCode.InternalServerError;
 
-            var result = JsonSerializer.Serialize(new
+            (int statusCode, string error) = exception switch
             {
-                error = "A critical incident occurred. Our team has been alerted.",
-                details = exception.Message
-            });
+                KeyNotFoundException => (StatusCodes.Status404NotFound, exception.Message),
+                InvalidOperationException => (StatusCodes.Status409Conflict, exception.Message),
+                ArgumentException => (StatusCodes.Status400BadRequest, exception.Message),
+                _ => (StatusCodes.Status500InternalServerError, "אירעה שגיאה פנימית. הצוות שלנו קיבל התראה.")
+            };
 
+            context.Response.StatusCode = statusCode;
+
+            var result = JsonSerializer.Serialize(new { error });
             return context.Response.WriteAsync(result);
         }
 

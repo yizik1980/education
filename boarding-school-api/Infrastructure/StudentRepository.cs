@@ -7,6 +7,7 @@ namespace boarding_school_api.Infrastructure
     public class StudentRepository : IStudentsRepository
     {
         private readonly StudentContext _studentContext;
+
         public StudentRepository(StudentContext studentContext)
         {
             _studentContext = studentContext;
@@ -14,66 +15,48 @@ namespace boarding_school_api.Infrastructure
 
         public async Task DeleteStudent(int studentId)
         {
-            var student = _studentContext.Students.Where(s => s.StudentId == studentId).FirstOrDefault();
-            if (student != null)
-            {
-                _studentContext.Students.Remove(student);
-                await _studentContext.SaveChangesAsync();
-            }
+            var student = await _studentContext.Students.FindAsync(studentId)
+                ?? throw new KeyNotFoundException($"תלמיד עם מזהה {studentId} לא נמצא.");
+
+            _studentContext.Students.Remove(student);
+            await _studentContext.SaveChangesAsync();
         }
 
-        public async Task<IQueryable<Student>> GetAllStudentsAsync()
-        {
-            return await Task.FromResult(_studentContext.Students.AsQueryable().AsNoTracking());
-        }
+        public async Task<IQueryable<Student>> GetAllStudentsAsync() =>
+            await Task.FromResult(_studentContext.Students.AsQueryable().AsNoTracking());
 
-        public async Task<IQueryable<Student>> GetStudentsByPlaceIdAsync(int PlaceId)
-        {
-            return await Task.FromResult(_studentContext.Students.Where(s => s.EducationPlaceId == PlaceId).AsQueryable());
-        }
+        public async Task<IQueryable<Student>> GetStudentsByPlaceIdAsync(int placeId) =>
+            await Task.FromResult(_studentContext.Students
+                .Where(s => s.EducationPlaceId == placeId)
+                .AsQueryable()
+                .AsNoTracking());
 
         public async Task<IEnumerable<Student>> InsertNewStudent(Student student)
         {
-            validateStudent(student);
+            if (await _studentContext.Students.AnyAsync(s => s.NationalId == student.NationalId))
+                throw new InvalidOperationException($"תלמיד עם תעודת זהות {student.NationalId} כבר קיים במערכת.");
+
             _studentContext.Students.Add(student);
             await _studentContext.SaveChangesAsync();
-            return await Task.FromResult<IEnumerable<Student>>(new List<Student> { student });
+            return new List<Student> { student };
         }
 
-        public Task<Student> UpdateStudent(Student student)
+        public async Task<Student> UpdateStudent(Student student)
         {
-            validateStudent(student);
-            var existingStudent = _studentContext.Students.Where(s => s.StudentId == student.StudentId).FirstOrDefault();
-            if (existingStudent != null)
-            {
-                existingStudent.FullName = student.FullName;
-                existingStudent.NationalId = student.NationalId;
-                existingStudent.Age = student.Age;
-                existingStudent.EducationPlaceId = student.EducationPlaceId;
-                existingStudent.StatusId = student.StatusId;
-                _studentContext.Update(existingStudent);
-                return Task.FromResult<Student>(existingStudent);
-            }
-            throw new ArgumentException($"Student with ID {student.StudentId} not found.");
-        }
-        private void validateStudent(Student student)
-        {
-            ArgumentNullException.ThrowIfNull(student);
+            var existing = await _studentContext.Students.FindAsync(student.StudentId)
+                ?? throw new KeyNotFoundException($"תלמיד עם מזהה {student.StudentId} לא נמצא.");
 
-            if (string.IsNullOrWhiteSpace(student.FullName))
-                throw new ArgumentException("FullName is required.");
+            if (await _studentContext.Students.AnyAsync(s => s.NationalId == student.NationalId && s.StudentId != student.StudentId))
+                throw new InvalidOperationException($"תלמיד אחר עם תעודת זהות {student.NationalId} כבר קיים במערכת.");
 
-            if (string.IsNullOrWhiteSpace(student.NationalId))
-                throw new ArgumentException("NationalId is required.");
+            existing.FullName = student.FullName;
+            existing.NationalId = student.NationalId;
+            existing.Age = student.Age;
+            existing.EducationPlaceId = student.EducationPlaceId;
+            existing.StatusId = student.StatusId;
 
-            if (student.Age is <= 0 or > 120)
-                throw new ArgumentException("Age must be between 1 and 120.");
-
-            if (student.EducationPlaceId <= 0)
-                throw new ArgumentException("EducationPlaceId is invalid.");
-
-            if (student.StatusId <= 0)
-                throw new ArgumentException("StatusId is invalid.");
+            await _studentContext.SaveChangesAsync();
+            return existing;
         }
     }
 }
