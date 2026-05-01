@@ -5,7 +5,7 @@
         public int StudentId { get; set; }
         public string FullName { get; set; } = null!;
         public string NationalId { get; set; } = null!;
-        public byte? Age { get; set; }
+        public int Age { get; set; }
         public int EducationPlaceId { get; set; }
         public int StatusId { get; set; }
     }

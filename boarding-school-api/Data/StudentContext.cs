@@ -1,4 +1,5 @@
-﻿using Microsoft.EntityFrameworkCore;
+﻿using boarding_school_api.Models;
+using Microsoft.EntityFrameworkCore;
 
 namespace boarding_school_api.Data
 {
@@ -8,12 +9,16 @@ namespace boarding_school_api.Data
             : base(options)
         {
         }
-        public DbSet<Models.Student> Students { get; set; }
-
+   
+        public DbSet<Student> Students { get; set; }
+        public DbSet<EducationPlaceSummary> EducationPlaces { get; set; }  
+      
         protected override void OnModelCreating(ModelBuilder modelBuilder)
         {
-            base.OnModelCreating(modelBuilder);
-            modelBuilder.Entity<Models.Student>().ToTable("Student");
+            modelBuilder.Entity<Student>()
+                .ToTable("Student");
+            modelBuilder.Entity<EducationPlaceSummary>()
+                .ToTable("EducationPlace");
         }
     }
 }
