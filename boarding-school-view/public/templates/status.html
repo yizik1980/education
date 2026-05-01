@@ -1,0 +1,26 @@
+<div ng-if="loading" class="text-center py-5">
+    <div class="spinner-border text-primary" style="width: 3rem; height: 3rem;" role="status">
+        <span class="visually-hidden">טוען...</span>
+    </div>
+    <p class="mt-3 text-muted fw-bold">מתחבר לשרת, אנא המתן...</p>
+</div>
+
+<div ng-if="error" class="text-center py-5">
+    <div class="alert alert-danger d-inline-block shadow-sm">
+        <div class="d-flex align-items-center mb-2">
+            <i class="bi bi-exclamation-octagon-fill fs-2 me-3"></i>
+            <h4 class="alert-heading mb-0">שגיאת תקשורת</h4>
+        </div>
+        <hr>
+        <p class="mb-3">{{error}}</p>
+        <button class="btn btn-danger w-100" ng-click="retry()">
+            <i class="bi bi-arrow-repeat me-2"></i>נסה שוב
+        </button>
+    </div>
+</div>
+
+<div ng-if="!loading && !error && filteredSchools.length === 0" class="text-center py-5 border rounded bg-white mt-3">
+    <i class="bi bi-search fs-1 text-muted d-block mb-3"></i>
+    <h5 class="text-muted">לא נמצאו פנימיות בעיר "{{searchQuery}}"</h5>
+    <button class="btn btn-link" ng-click="searchQuery=''; filterByCity()">נקה סינון</button>
+</div>
