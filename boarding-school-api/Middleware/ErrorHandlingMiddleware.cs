@@ -1,6 +1,5 @@
-using System.Net;
-using System.Net.Http.Json;
 using System.Text.Json;
+using boarding_school_api.Services;
 
 namespace boarding_school_api.Middleware
 {
@@ -8,13 +7,13 @@ namespace boarding_school_api.Middleware
     {
         private readonly RequestDelegate _next;
         private readonly ILogger<ErrorHandlingMiddleware> _logger;
-        private readonly IConfiguration _configuration;
+        private readonly ILoggingService _loggingService;
 
-        public ErrorHandlingMiddleware(RequestDelegate next, ILogger<ErrorHandlingMiddleware> logger, IConfiguration configuration)
+        public ErrorHandlingMiddleware(RequestDelegate next, ILogger<ErrorHandlingMiddleware> logger, ILoggingService loggingService)
         {
             _next = next;
             _logger = logger;
-            _configuration = configuration;
+            _loggingService = loggingService;
         }
 
         public async Task Invoke(HttpContext context)
@@ -25,45 +24,36 @@ namespace boarding_school_api.Middleware
             }
             catch (Exception ex)
             {
-                _logger.LogError(ex, "An unhandled exception has occurred.");
-                await HandleExceptionAsync(context, ex);
+                _logger.LogError(ex, "Unhandled exception on {Method} {Path}", context.Request.Method, context.Request.Path);
 
-                if (ex is not KeyNotFoundException && ex is not InvalidOperationException)
-                    await ReportToLoggingService(ex.Message);
+                var statusCode = GetStatusCode(ex);
+                var level = statusCode >= 500 ? "ERROR" : "WARN";
+                var logMessage = $"[{context.Request.Method} {context.Request.Path}] {ex.GetType().Name}: {ex.Message}";
+
+                await _loggingService.LogAsync(level, logMessage);
+                await WriteResponseAsync(context, ex, statusCode);
             }
         }
 
-        private static Task HandleExceptionAsync(HttpContext context, Exception exception)
+        private static int GetStatusCode(Exception exception) => exception switch
+        {
+            KeyNotFoundException => StatusCodes.Status404NotFound,
+            InvalidOperationException => StatusCodes.Status409Conflict,
+            ArgumentException => StatusCodes.Status400BadRequest,
+            _ => StatusCodes.Status500InternalServerError
+        };
+
+        private static async Task WriteResponseAsync(HttpContext context, Exception exception, int statusCode)
         {
             context.Response.ContentType = "application/json";
-
-            (int statusCode, string error) = exception switch
-            {
-                KeyNotFoundException => (StatusCodes.Status404NotFound, exception.Message),
-                InvalidOperationException => (StatusCodes.Status409Conflict, exception.Message),
-                ArgumentException => (StatusCodes.Status400BadRequest, exception.Message),
-                _ => (StatusCodes.Status500InternalServerError, "אירעה שגיאה פנימית. הצוות שלנו קיבל התראה.")
-            };
-
             context.Response.StatusCode = statusCode;
 
-            var result = JsonSerializer.Serialize(new { error });
-            return context.Response.WriteAsync(result);
-        }
+            var error = statusCode >= 500
+                ? "אירעה שגיאה פנימית. הצוות שלנו קיבל התראה."
+                : exception.Message;
 
-        private async Task ReportToLoggingService(string message)
-        {
-            try
-            {
-                using var client = new HttpClient();
-                var loggingUrl = _configuration["LoggingServiceUrl"] ?? "http://localhost:3001/logs";
-                var logData = new { level = "CRITICAL", message = message, timestamp = DateTime.UtcNow };
-                await client.PostAsJsonAsync(loggingUrl, logData);
-            }
-            catch (Exception)
-            {
-                // If logging service is down, we don't want to crash the main API
-            }
+            var result = JsonSerializer.Serialize(new { error });
+            await context.Response.WriteAsync(result);
         }
     }
 }

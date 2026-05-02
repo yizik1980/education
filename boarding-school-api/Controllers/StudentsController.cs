@@ -1,5 +1,6 @@
 ﻿using boarding_school_api.Infrastructure;
 using boarding_school_api.Models;
+using boarding_school_api.Services;
 using FluentValidation;
 using Microsoft.AspNetCore.Mvc;
 
@@ -7,7 +8,8 @@ using Microsoft.AspNetCore.Mvc;
 [ApiController]
 public class StudentsController(
     IStudentsRepository studentRepository,
-    IValidator<Student> validator) : ControllerBase
+    IValidator<Student> validator,
+    ILoggingService loggingService) : ControllerBase
 {
     [HttpGet]
     public async Task<IActionResult> GetAll() =>
@@ -22,10 +24,14 @@ public class StudentsController(
     {
         var validation = await validator.ValidateAsync(student);
         if (!validation.IsValid)
+        {
+            var errors = string.Join(" | ", validation.Errors.Select(e => e.ErrorMessage));
+            await loggingService.LogAsync("WARN", $"[POST /api/students] Validation failed: {errors}");
             return BadRequest(new
             {
                 errors = validation.Errors.Select(e => new { property = e.PropertyName, message = e.ErrorMessage })
             });
+        }
 
         var created = await studentRepository.InsertNewStudent(student);
         return CreatedAtAction(nameof(GetAll), new { id = created }, created);
@@ -35,17 +41,24 @@ public class StudentsController(
     public async Task<IActionResult> Update([FromBody] Student student)
     {
         if (student.StudentId <= 0)
+        {
+            await loggingService.LogAsync("WARN", $"[PUT /api/students] Validation failed: מזהה תלמיד לא תקין.");
             return BadRequest(new
             {
                 errors = new[] { new { property = nameof(Student.StudentId), message = "מזהה תלמיד לא תקין." } }
             });
+        }
 
         var validation = await validator.ValidateAsync(student);
         if (!validation.IsValid)
+        {
+            var errors = string.Join(" | ", validation.Errors.Select(e => e.ErrorMessage));
+            await loggingService.LogAsync("WARN", $"[PUT /api/students/{student.StudentId}] Validation failed: {errors}");
             return BadRequest(new
             {
                 errors = validation.Errors.Select(e => new { property = e.PropertyName, message = e.ErrorMessage })
             });
+        }
 
         var updated = await studentRepository.UpdateStudent(student);
         return Ok(updated);
