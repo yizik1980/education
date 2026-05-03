@@ -21,6 +21,6 @@
 
 <div ng-if="!loading && !error && filteredSchools.length === 0" class="text-center py-5 border rounded bg-white mt-3">
     <i class="bi bi-search fs-1 text-muted d-block mb-3"></i>
-    <h5 class="text-muted">לא נמצאו פנימיות בעיר "{{searchQuery}}"</h5>
-    <button class="btn btn-link" ng-click="searchQuery=''; filterByCity()">נקה סינון</button>
+    <h5 class="text-muted">לא נמצאו פנימיות בעיר {{searchQuery}}</h5>
+    <button class="btn btn-link" ng-click="filterByCity($event)">נקה סינון</button>
 </div>

@@ -13,7 +13,9 @@
       </tr>
     </thead>
     <tbody>
-      <tr ng-repeat="school in filteredSchools" class="animate-row">
+      <tr ng-repeat="school in filteredSchools" class="animate-row"
+          ng-click="selectSchool(school)" style="cursor:pointer"
+          ng-class="{'table-primary': selectedSchool && selectedSchool.educationPlaceId === school.educationPlaceId}">
         <td><span class="text-muted">{{school.educationPlaceId}}</span></td>
         <td><span class="fw-bold">{{school.placeName}}</span></td>
         <td>

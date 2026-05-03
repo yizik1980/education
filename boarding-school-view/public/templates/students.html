@@ -1,0 +1,106 @@
+<div ng-if="selectedSchool" class="mt-4">
+  <div class="card shadow-sm border-secondary">
+    <div class="card-header bg-secondary text-white d-flex justify-content-between align-items-center">
+      <h5 class="mb-0">
+        <i class="bi bi-people-fill me-2"></i>
+        תלמידי פנימיית: <strong>{{selectedSchool.placeName}}</strong>
+      </h5>
+      <button class="btn btn-outline-light btn-sm" ng-click="closeStudents()">
+        <i class="bi bi-x-lg"></i>
+      </button>
+    </div>
+    <div class="card-body">
+
+      <div ng-if="loadingStudents" class="text-center py-3">
+        <div class="spinner-border text-secondary" role="status">
+          <span class="visually-hidden">טוען...</span>
+        </div>
+        <p class="mt-2 text-muted">טוען תלמידים...</p>
+      </div>
+
+      <div ng-if="studentsError" class="alert alert-danger">{{studentsError}}</div>
+
+      <div ng-if="!loadingStudents && !studentsError">
+        <div ng-if="students.length === 0" class="text-center text-muted py-3">
+          <i class="bi bi-person-x fs-3 d-block mb-2"></i>
+          אין תלמידים רשומים בפנימייה זו.
+        </div>
+
+        <div class="table-responsive" ng-if="students.length > 0">
+          <table class="table table-sm table-hover table-bordered align-middle mb-3">
+            <thead class="table-secondary">
+              <tr>
+                <th style="width:60px">מזהה</th>
+                <th>שם מלא</th>
+                <th>תעודת זהות</th>
+                <th class="text-center" style="width:70px">גיל</th>
+                <th class="text-center" style="width:80px">סטטוס</th>
+              </tr>
+            </thead>
+            <tbody>
+              <tr ng-repeat="student in students">
+                <td><span class="text-muted">{{student.studentId}}</span></td>
+                <td class="fw-semibold">{{student.fullName}}</td>
+                <td><code>{{student.nationalId}}</code></td>
+                <td class="text-center">{{student.age}}</td>
+                <td class="text-center">
+                  <span class="badge" ng-class="student.statusId === 1 ? 'bg-success' : 'bg-secondary'">
+                    {{student.statusId === 1 ? 'פעיל' : 'לא פעיל'}}
+                  </span>
+                </td>
+              </tr>
+            </tbody>
+          </table>
+        </div>
+
+        <hr>
+        <h6 class="fw-bold mb-3">
+          <i class="bi bi-person-plus-fill me-2"></i>הוסף תלמיד חדש לפנימייה
+        </h6>
+
+        <form name="addStudentForm" ng-submit="addStudent()" novalidate>
+          <div class="row g-2 align-items-end">
+            <div class="col-md-4">
+              <label class="form-label form-label-sm">שם מלא <span class="text-danger">*</span></label>
+              <input type="text" class="form-control form-control-sm"
+                     ng-model="newStudent.fullName"
+                     required minlength="2" maxlength="100"
+                     placeholder="ישראל ישראלי">
+            </div>
+            <div class="col-md-3">
+              <label class="form-label form-label-sm">תעודת זהות <span class="text-danger">*</span></label>
+              <input type="text" class="form-control form-control-sm"
+                     ng-model="newStudent.nationalId"
+                     required ng-pattern="/^\d{9}$/" maxlength="9"
+                     placeholder="000000000">
+            </div>
+            <div class="col-md-2">
+              <label class="form-label form-label-sm">גיל <span class="text-danger">*</span></label>
+              <input type="number" class="form-control form-control-sm"
+                     ng-model="newStudent.age"
+                     required min="6" max="120"
+                     placeholder="17">
+            </div>
+            <div class="col-md-2">
+              <label class="form-label form-label-sm">סטטוס <span class="text-danger">*</span></label>
+              <select class="form-select form-select-sm" ng-model="newStudent.statusId" required>
+                <option value="">בחר...</option>
+                <option value="1">פעיל</option>
+                <option value="2">לא פעיל</option>
+              </select>
+            </div>
+            <div class="col-md-1">
+              <button type="submit" class="btn btn-primary btn-sm w-100"
+                      ng-disabled="addStudentForm.$invalid || addingStudent"
+                      title="הוסף תלמיד">
+                <span ng-if="addingStudent" class="spinner-border spinner-border-sm"></span>
+                <i ng-if="!addingStudent" class="bi bi-plus-lg"></i>
+              </button>
+            </div>
+          </div>
+        </form>
+      </div>
+
+    </div>
+  </div>
+</div>

@@ -3,11 +3,11 @@
         <label class="form-label fw-bold">סינון לפי עיר:</label>
         <div class="input-group">
             <span class="input-group-text"><i class="bi bi-search"></i></span>
-            <input type="text" 
-                   class="form-control" 
-                   placeholder="הקלד שם עיר לסינון..." 
-                   ng-model="searchQuery" 
-                   ng-change="filterByCity()"
+            <input type="text"
+                   class="form-control"
+                   placeholder="הקלד שם עיר לסינון..."
+                   ng-model="cityFilter"
+                   ng-keyup="filterByCity($event)"
                    list="cityList">
             <datalist id="cityList">
                 <option ng-repeat="city in citySuggestions" value="{{city}}">
