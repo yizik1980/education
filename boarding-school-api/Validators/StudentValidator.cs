@@ -21,7 +21,12 @@ namespace boarding_school_api.Validators
             RuleFor(s => s.NationalId)
                 .NotEmpty().WithMessage("תעודת זהות היא שדה חובה.")
                 .Length(9).WithMessage("תעודת זהות חייבת להכיל 9 ספרות.")
-                .Matches(@"^\d{9}$").WithMessage("תעודת זהות חייבת להכיל ספרות בלבד.");
+                .Matches(@"^\d{9}$").WithMessage("תעודת זהות חייבת להכיל ספרות בלבד.")
+                .Must(IsValidIsraeliId).WithMessage("תעודת זהות אינה תקינה.")
+                .MustAsync(async (student, nationalId, ct) =>
+                    !await _context.Students.AnyAsync(
+                        s => s.NationalId == nationalId && s.StudentId != student.StudentId, ct))
+                .WithMessage("תעודת זהות זו כבר קיימת במערכת.");
 
             RuleFor(s => s.Age)
                 .InclusiveBetween(6, 120).WithMessage("גיל חייב להיות בין 6 ל-120.");
@@ -37,5 +42,20 @@ namespace boarding_school_api.Validators
 
         private async Task<bool> EducationPlaceExistsAsync(int placeId, CancellationToken ct) =>
             await _context.EducationPlaces.AnyAsync(e => e.EducationPlaceId == placeId, ct);
+
+        // Israeli ID Luhn-style checksum
+        private static bool IsValidIsraeliId(string id)
+        {
+            if (id is not { Length: 9 } || !id.All(char.IsDigit))
+                return false;
+
+            int sum = 0;
+            for (int i = 0; i < 9; i++)
+            {
+                int product = (id[i] - '0') * (i % 2 == 0 ? 1 : 2);
+                sum += product > 9 ? product - 9 : product;
+            }
+            return sum % 10 == 0;
+        }
     }
 }

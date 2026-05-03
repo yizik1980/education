@@ -144,7 +144,7 @@ public class StudentsControllerTests
     {
         StudentId = id,
         FullName = "ישראל ישראלי",
-        NationalId = "123456789",
+        NationalId = "123456782",
         Age = 16,
         EducationPlaceId = placeId,
         StatusId = 1

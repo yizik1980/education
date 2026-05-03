@@ -77,6 +77,46 @@ public class StudentValidatorTests : IDisposable
         Assert.Contains(result.Errors, e => e.PropertyName == "NationalId");
     }
 
+    [Fact]
+    public async Task NationalId_InvalidChecksum_Fails()
+    {
+        // 123456789 — 9 digits but Luhn sum = 47, not divisible by 10
+        var result = await _validator.ValidateAsync(Valid(s => s.NationalId = "123456789"));
+        Assert.False(result.IsValid);
+        Assert.Contains(result.Errors, e => e.PropertyName == "NationalId" && e.ErrorMessage.Contains("אינה תקינה"));
+    }
+
+    [Fact]
+    public async Task NationalId_DuplicateInDb_Fails()
+    {
+        _context.Students.Add(new Student
+        {
+            StudentId = 10, FullName = "קיים", NationalId = "123456782",
+            Age = 16, EducationPlaceId = 1, StatusId = 1
+        });
+        await _context.SaveChangesAsync();
+
+        // New student (StudentId=0) with same NationalId
+        var result = await _validator.ValidateAsync(Valid(s => s.StudentId = 0));
+        Assert.False(result.IsValid);
+        Assert.Contains(result.Errors, e => e.PropertyName == "NationalId" && e.ErrorMessage.Contains("כבר קיימת"));
+    }
+
+    [Fact]
+    public async Task NationalId_SameStudentUpdate_Passes()
+    {
+        _context.Students.Add(new Student
+        {
+            StudentId = 5, FullName = "קיים", NationalId = "123456782",
+            Age = 16, EducationPlaceId = 1, StatusId = 1
+        });
+        await _context.SaveChangesAsync();
+
+        // Updating same student with its own NationalId — should not be flagged as duplicate
+        var result = await _validator.ValidateAsync(Valid(s => s.StudentId = 5));
+        Assert.DoesNotContain(result.Errors, e => e.PropertyName == "NationalId" && e.ErrorMessage.Contains("כבר קיימת"));
+    }
+
     // ── Age ───────────────────────────────────────────────────────────────
 
     [Fact]
@@ -145,7 +185,7 @@ public class StudentValidatorTests : IDisposable
     {
         StudentId = 0,
         FullName = "ישראל ישראלי",
-        NationalId = "123456789",
+        NationalId = "123456782",  // Luhn sum = 40 ✓
         Age = 16,
         EducationPlaceId = 1,
         StatusId = 1
